@@ -1,19 +1,10 @@
 package com.github.nnnnusui.slideshow
 
-import java.nio.file.Path
-
 import com.github.nnnnusui.slideshow.Exo.Object.{MediaObject, Parameter, TimelineObject}
 
-import scala.io.StdIn
-
-object TemplateGenerator extends App {
-//  val header = Exo.Header(1280, 720, 30)
-//  val objects = generate(128, 30, 1, Seq())
-//  println(Exo(header, objects).toExo)
-
+object TemplateGenerator {
   def generate(bpm: Int, fps: Int, step: Int, objects: Seq[MediaObject]): Seq[TimelineObject] ={
     val framePerBeat = (fps * 60) / bpm.toDouble
-    val maxFrame = objects.size * step
     objects.zipWithIndex.map{ case (obj, index)=>
       val barCount = index * step
       val parameter = {
