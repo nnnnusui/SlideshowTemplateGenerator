@@ -13,11 +13,11 @@ import scalafx.scene.layout.BorderPane
 import scalafx.stage.FileChooser
 
 object SlideshowBuilder extends JFXApp{
-//  val timelineLog = List[ObservableBuffer[Picture]]()
+//  val timelineLog = List[ObservableBuffer[Picture]]() // TODO: [Undo, Redo] for timeline
   val timeline = new ObservableBuffer[Picture]
   private val timelineView: ListView[Picture] = new ListView[Picture]{
     items.set(timeline)
-//    selectionModel
+//    selectionModel //TODO: support Multiple selection
     cellFactory = _=> new TimelineCell
     onDragOver    = event=>{ FilesDetector.onDragOver(event);    event.consume() }
     onDragDropped = event=>{ FilesDetector.onDragDropped(event); event.consume() }
