@@ -1,34 +1,39 @@
 package com.github.nnnnusui.slideshow
 
-import com.github.nnnnusui.slideshow.EXO.Object.{MediaObject, Parameter, TimelineObject}
+import com.github.nnnnusui.slideshow.Exo.Object.{MediaObject, Parameter, TimelineObject}
 
 import scala.io.StdIn
 
 object TemplateGenerator extends App {
-  println(EXO.Header(1280, 720, 30).toExo)
-  generate(128, 30, 1)
+  val header = Exo.Header(1280, 720, 30)
+  val objects = generate(128, 30, 1)
+  println(Exo(header, objects).toExo)
 
-  def generate(bpm: Int, fps: Int, step: Int): Unit ={
+  def generate(bpm: Int, fps: Int, step: Int): Seq[TimelineObject] ={
     val framePerBeat = (fps * 60) / bpm.toDouble
-    (0 to 100 by step).zipWithIndex.foreach{ case (barIndex, index)=>
+    (0 to 100 by step).zipWithIndex.map{ case (barIndex, index)=>
       val parameter = {
         val start = (framePerBeat * barIndex).toInt + 1
         val end   = (framePerBeat * (barIndex + step)).toInt
         Parameter(start, end)
       }
       val picture   = MediaObject.Picture(s"G:\\workspace\\movie\\AviUtl\\$index.png")
-      val obj = TimelineObject(index, parameter, picture)
-      println(obj.toExo)
+      TimelineObject(index, parameter, picture)
     }
   }
 }
 
-object EXO{
+case class Exo(header: Exo.Header, objects: Seq[Exo.Object.TimelineObject]){
+  def toExo: String
+    = (header :: objects.toList).map(_.toExo).mkString("\n")
+}
+object Exo{
   case class Header(width: Int, height: Int, rate: Int
                    ,scale:     Int = 1
                    ,length:    Int = 1
                    ,audioRate: Int = 41000
-                   ,audioCh:   Int = 2) extends Object{
+                   ,audioCh:   Int = 2
+                   ) extends Object{
     override def toExo: String
       =s"""[exedit]
           |width=$width
@@ -42,7 +47,9 @@ object EXO{
 
   sealed trait Object{ def toExo: String }
   object Object{
-    case class TimelineObject(index: Int, parameter: Parameter, obj: MediaObject) extends Object{
+    case class TimelineObject(index: Int, parameter: Parameter, obj: MediaObject
+                             //,effects: Seq[FilterEffect] = Seq.empty
+                             ) extends Object{
       def toExo: String
         =s"""[$index]
             |${parameter.toExo}
@@ -67,6 +74,10 @@ object EXO{
           =s"""_name=画像ファイル
               |file=$filePath""".stripMargin
       }
+    }
+    sealed trait FilterEffect extends Object
+    object FilterEffect{
+
     }
   }
 }
