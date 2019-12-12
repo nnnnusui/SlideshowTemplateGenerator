@@ -9,7 +9,7 @@ import scalafx.application.JFXApp.PrimaryStage
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.Scene
 import scalafx.scene.control.{Button, ListCell, ListView, ScrollPane}
-import scalafx.scene.input.{ClipboardContent, TransferMode}
+import scalafx.scene.input.{ClipboardContent, MouseEvent, TransferMode}
 import scalafx.scene.layout.BorderPane
 import scalafx.stage.FileChooser
 
@@ -17,6 +17,7 @@ object SlideshowBuilder extends JFXApp{
   val timeline = new ObservableBuffer[Picture]
   private val timelineView: ListView[Picture] = new ListView[Picture]{
     items.set(timeline)
+//    selectionModel
     cellFactory = _=> new TimelineCell
     onDragOver = event=>{
       if(event.getDragboard.hasFiles)
@@ -77,36 +78,54 @@ object SlideshowBuilder extends JFXApp{
   class TimelineCell extends ListCell[Picture] {
     item.onChange{ (_, _, value)=> text = if (value== null) "" else value.toString }
     onDragDetected = event=>{
-      if (item != null){
+      LocalSorting.onDetect(event)
+      event.consume()
+    }
+    onDragOver = event=>{
+      LocalSorting.onDragOver(event)
+      FilesDetector.onDragOver(event)
+      event.consume()
+    }
+    onDragDropped = event=>{
+      LocalSorting.onDragDropped(event)
+      FilesDetector.onDragDropped(event)
+      event.consume()
+    }
+    object FilesDetector{
+      def onDragOver(event: javafx.scene.input.DragEvent): Unit ={
+        if(!event.getDragboard.hasFiles) return
+        event.acceptTransferModes(TransferMode.Link)
+      }
+      def onDragDropped(event: javafx.scene.input.DragEvent): Unit ={
+        val board = event.getDragboard
+        if (!board.hasFiles) return
+        walkFiles(board).map(it=> Picture(it.toAbsolutePath))
+          .foreach(it=> timeline.add(it))
+        event.setDropCompleted(true)
+      }
+    }
+    object LocalSorting{
+      def onDetect(event: javafx.scene.input.MouseEvent): Unit ={
+        if (item == null) return
         val board = startDragAndDrop(TransferMode.Move)
         val content = new ClipboardContent()
         content.putString(index.value.toString)
         board.setContent(content)
-        event.consume()
       }
-    }
-    onDragOver = event=>{
-      event.getDragboard match {
-        case it if it.hasString => event.acceptTransferModes(TransferMode.Move)
-        case it if it.hasFiles => event.acceptTransferModes(TransferMode.Link)
+      def onDragOver(event: javafx.scene.input.DragEvent): Unit ={
+        if(!event.getDragboard.hasString) return
+        event.acceptTransferModes(TransferMode.Move)
       }
-      event.consume()
-    }
-    onDragDropped = event=>{
-      event.getDragboard match {
-        case it if it.hasFiles =>
-          walkFiles(it).map(it=> Picture(it.toAbsolutePath))
-            .foreach(it=> timeline.add(it))
-          event.setDropCompleted(true)
-        case it if it.hasString =>
-          val sourceIndex = it.getString.toInt
-          val source = timeline(sourceIndex)
-          timeline.remove(sourceIndex)
-          val targetIndex = Seq(index.value, timeline.size).min
-          timeline.add(targetIndex, source)
-          event.setDropCompleted(true)
+      def onDragDropped(event: javafx.scene.input.DragEvent): Unit ={
+        val board = event.getDragboard
+        if (!board.hasString) return
+        val sourceIndex = board.getString.toInt
+        val source = timeline(sourceIndex)
+        timeline.remove(sourceIndex)
+        val targetIndex = Seq(index.value, timeline.size).min
+        timeline.add(targetIndex, source)
+        event.setDropCompleted(true)
       }
-      event.consume()
     }
   }
 }
