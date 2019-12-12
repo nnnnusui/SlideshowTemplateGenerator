@@ -2,48 +2,33 @@ package com.github.nnnnusui.slideshow
 
 import java.nio.file.{Files, Path, Paths}
 
-import com.github.nnnnusui.slideshow.Exo.Object.MediaObject
-import javafx.scene.input.Dragboard
+import javafx.scene.input.{Dragboard, MouseButton}
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.Scene
-import scalafx.scene.control.{Button, ListCell, ListView, ScrollPane}
-import scalafx.scene.input.{ClipboardContent, MouseEvent, TransferMode}
+import scalafx.scene.control.{Button, ListCell, ListView}
+import scalafx.scene.input.{ClipboardContent, TransferMode}
 import scalafx.scene.layout.BorderPane
 import scalafx.stage.FileChooser
 
 object SlideshowBuilder extends JFXApp{
+//  val timelineLog = List[ObservableBuffer[Picture]]()
   val timeline = new ObservableBuffer[Picture]
   private val timelineView: ListView[Picture] = new ListView[Picture]{
     items.set(timeline)
 //    selectionModel
     cellFactory = _=> new TimelineCell
-    onDragOver = event=>{
-      if(event.getDragboard.hasFiles)
-        event.acceptTransferModes(TransferMode.Link)
-      event.consume()
-    }
-    onDragDropped = event=>{
-      val dragboard = event.getDragboard
-      if(dragboard.hasFiles) {
-        walkFiles(dragboard).map(it=> Picture(it.toAbsolutePath))
-          .foreach(it=> timeline.add(it))
-        event.setDropCompleted(true)
-      } else {
-        event.setDropCompleted(false)
-      }
-      event.consume()
-    }
+    onDragOver    = event=>{ FilesDetector.onDragOver(event);    event.consume() }
+    onDragDropped = event=>{ FilesDetector.onDragDropped(event); event.consume() }
   }
+  private val saveButton = new Button("to .exo"){ onAction = _=> saveToExo() }
   stage = new PrimaryStage{
     title = "Slideshow Builder"
     scene = new Scene{
       root = new BorderPane{
         center = timelineView
-        bottom = new Button("to .exo"){
-          onAction = _=> saveToExo()
-        }
+        bottom = saveButton
       }
     }
   }
@@ -77,6 +62,7 @@ object SlideshowBuilder extends JFXApp{
 
   class TimelineCell extends ListCell[Picture] {
     item.onChange{ (_, _, value)=> text = if (value== null) "" else value.toString }
+    onMouseClicked = event=> if (event.getButton == MouseButton.MIDDLE) remove()
     onDragDetected = event=>{
       LocalSorting.onDetect(event)
       event.consume()
@@ -91,18 +77,8 @@ object SlideshowBuilder extends JFXApp{
       FilesDetector.onDragDropped(event)
       event.consume()
     }
-    object FilesDetector{
-      def onDragOver(event: javafx.scene.input.DragEvent): Unit ={
-        if(!event.getDragboard.hasFiles) return
-        event.acceptTransferModes(TransferMode.Link)
-      }
-      def onDragDropped(event: javafx.scene.input.DragEvent): Unit ={
-        val board = event.getDragboard
-        if (!board.hasFiles) return
-        walkFiles(board).map(it=> Picture(it.toAbsolutePath))
-          .foreach(it=> timeline.add(it))
-        event.setDropCompleted(true)
-      }
+    def remove(): Unit ={
+      timeline.remove(index.value)
     }
     object LocalSorting{
       def onDetect(event: javafx.scene.input.MouseEvent): Unit ={
@@ -126,6 +102,19 @@ object SlideshowBuilder extends JFXApp{
         timeline.add(targetIndex, source)
         event.setDropCompleted(true)
       }
+    }
+  }
+  object FilesDetector{
+    def onDragOver(event: javafx.scene.input.DragEvent): Unit ={
+      if(!event.getDragboard.hasFiles) return
+      event.acceptTransferModes(TransferMode.Link)
+    }
+    def onDragDropped(event: javafx.scene.input.DragEvent): Unit ={
+      val board = event.getDragboard
+      if (!board.hasFiles) return
+      walkFiles(board).map(it=> Picture(it.toAbsolutePath))
+        .foreach(it=> timeline.add(it))
+      event.setDropCompleted(true)
     }
   }
 }
