@@ -2,10 +2,11 @@ package com.github.nnnnusui.slideshow
 
 import java.nio.file.{Files, Path}
 
+import com.github.nnnnusui.slideshow.Timeline.Picture
 import javafx.scene.{input => jfxsi}
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.control.{ListCell, ListView}
-import scalafx.scene.input._
+import scalafx.scene.input.{ClipboardContent, DragEvent, Dragboard, MouseEvent, TransferMode}
 
 class Timeline {
   //  val timelineLog = List[ObservableBuffer[Picture]]() // TODO: [Undo, Redo] for timeline
@@ -62,7 +63,7 @@ class Timeline {
       FilesDetector.onDragDropped(new DragEvent(event), Seq(value.size, index.value).min)
       event.consume()
     }
-    def remove(): Unit = {
+    private def remove(): Unit = {
       if(!empty.value)
         value.remove(index.value)
     }
@@ -89,5 +90,11 @@ class Timeline {
         event.setDropCompleted(true)
       }
     }
+  }
+}
+
+object Timeline{
+  case class Picture(path: Path){
+    override def toString: String = path.getFileName.toString
   }
 }

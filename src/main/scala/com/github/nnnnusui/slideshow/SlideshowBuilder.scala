@@ -1,15 +1,12 @@
 package com.github.nnnnusui.slideshow
 
 import java.nio.charset.Charset
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, Paths}
 
-import javafx.scene.input.{Dragboard, MouseButton}
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
-import scalafx.collections.ObservableBuffer
 import scalafx.scene.Scene
-import scalafx.scene.control.{Button, Label, ListCell, ListView}
-import scalafx.scene.input.{ClipboardContent, TransferMode}
+import scalafx.scene.control.{Button, Label}
 import scalafx.scene.layout.BorderPane
 import scalafx.stage.FileChooser
 
@@ -45,8 +42,4 @@ object SlideshowBuilder extends JFXApp{
     val exo = Exo(header, timelineObjects)
     Files.writeString(result.toPath, exo.toExo, Charset.forName("Shift_JIS"))
   }
-}
-
-case class Picture(path: Path){
-  override def toString: String = path.getFileName.toString
 }
