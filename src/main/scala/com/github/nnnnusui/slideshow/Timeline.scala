@@ -11,8 +11,6 @@ import scalafx.scene.input.{ClipboardContent, DataFormat, DragEvent, Dragboard, 
 import scala.jdk.CollectionConverters._
 
 class Timeline {
-  var timelineLog: List[Vector[Picture]] = List(Vector.empty[Picture])
-  var logAccessIndex = 0
   val value = new ObservableBuffer[Picture]
   val view: ListView[Picture] = new ListView[Picture]{
     items.set(value)
@@ -23,29 +21,33 @@ class Timeline {
 
     onKeyPressed = event=> {
       event.getCode match {
-        case it if it == jfxsi.KeyCode.Z && event.isControlDown && event.isShiftDown => redo()
-        case it if it == jfxsi.KeyCode.Z && event.isControlDown => undo()
+        case it if it == jfxsi.KeyCode.Z && event.isControlDown && event.isShiftDown => ValueLogger.redo()
+        case it if it == jfxsi.KeyCode.Z && event.isControlDown => ValueLogger.undo()
         case _ =>
       }
     }
   }
-  def logging(): Unit ={
-    val log = timelineLog.drop(logAccessIndex)
-    timelineLog = value.toVector :: log.take(9)
-    logAccessIndex = 0
-    println(timelineLog.map(_.size))
-  }
-  def undo(): Unit ={
-    if(!(logAccessIndex +1 < timelineLog.size)) return
-    logAccessIndex += 1
-    value.setAll(timelineLog(logAccessIndex).asJava)
-    println(timelineLog.map(_.size) +" "+ logAccessIndex)
-  }
-  def redo(): Unit = {
-    if(!(logAccessIndex > 0)) return
-    logAccessIndex -= 1
-    value.setAll(timelineLog(logAccessIndex).asJava)
-    println(timelineLog.map(_.size) +" "+ logAccessIndex)
+  object ValueLogger{
+    private var timelineLog: List[Vector[Picture]] = List(Vector.empty[Picture])
+    private var logAccessIndex = 0
+    def logging(): Unit ={
+      val log = timelineLog.drop(logAccessIndex)
+      timelineLog = value.toVector :: log.take(9)
+      logAccessIndex = 0
+      println(timelineLog.map(_.size))
+    }
+    def undo(): Unit ={
+      if(!(logAccessIndex +1 < timelineLog.size)) return
+      logAccessIndex += 1
+      value.setAll(timelineLog(logAccessIndex).asJava)
+      println(timelineLog.map(_.size) +" "+ logAccessIndex)
+    }
+    def redo(): Unit = {
+      if(!(logAccessIndex > 0)) return
+      logAccessIndex -= 1
+      value.setAll(timelineLog(logAccessIndex).asJava)
+      println(timelineLog.map(_.size) +" "+ logAccessIndex)
+    }
   }
 
   object FilesDetector{
@@ -60,7 +62,7 @@ class Timeline {
       val pictures = walkFiles(board).map(it=> Picture(it.toAbsolutePath))
       value.addAll(index, pictures.asJava)
       event.setDropCompleted(true)
-      logging()
+      ValueLogger.logging()
     }
     private def walkFiles(dragboard: Dragboard): Seq[Path] ={
       dragboard.getFiles.asScala
@@ -123,7 +125,7 @@ class Timeline {
         /* select */ val selectionModel = listView.get().getSelectionModel
           selectionModel.clearSelection()
           selectionModel.selectRange(targetIndex, targetIndex + sources.size)
-        logging()
+        ValueLogger.logging()
       }
     }
   }
