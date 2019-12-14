@@ -6,17 +6,30 @@ import com.github.nnnnusui.slideshow.Timeline.Picture
 import javafx.scene.{input => jfxsi}
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.control.{ListCell, ListView, SelectionMode}
-import scalafx.scene.input.{ClipboardContent, DataFormat, DragEvent, Dragboard, MouseEvent, TransferMode}
+import scalafx.scene.input.{ClipboardContent, DataFormat, DragEvent, Dragboard, KeyCode, MouseEvent, TransferMode}
+
+import scala.jdk.CollectionConverters._
 
 class Timeline {
-  //  val timelineLog = List[ObservableBuffer[Picture]]() // TODO: [Undo, Redo] for timeline
+  var timelineLog: List[Vector[Picture]] = List[Vector[Picture]]() // TODO: [Redo] for timeline
   val value = new ObservableBuffer[Picture]
+  value.onChange((it, _)=> println(timelineLog.map(_.size)))
   val view: ListView[Picture] = new ListView[Picture]{
     items.set(value)
     selectionModel.value.setSelectionMode(SelectionMode.Multiple)
     cellFactory = _=> new TimelineCell
     onDragOver    = event=>{ FilesDetector.onDragOver(new DragEvent(event));    event.consume() }
     onDragDropped = event=>{ FilesDetector.onDragDropped(new DragEvent(event)); event.consume() }
+
+    onKeyPressed = event=> {
+      if (event.isControlDown && event.getCode == jfxsi.KeyCode.Z && timelineLog.nonEmpty){
+        value.setAll(timelineLog.head.asJava)
+        timelineLog = timelineLog.drop(1)
+      }
+    }
+  }
+  def logging(): Unit ={
+    timelineLog = value.toVector :: timelineLog.take(9)
   }
 
   object FilesDetector{
@@ -29,6 +42,7 @@ class Timeline {
       val board = new Dragboard(event.getDragboard)
       if (!board.hasFiles) return
       val pictures = walkFiles(board).map(it=> Picture(it.toAbsolutePath))
+      logging()
       value.addAll(index, pictures.asJava)
       event.setDropCompleted(true)
     }
@@ -68,7 +82,6 @@ class Timeline {
         value.remove(index.value)
     }
     object LocalSorting{
-      import scala.jdk.CollectionConverters._
       def onDetect(event: MouseEvent): Unit ={
         if (item == null) return
         val board = startDragAndDrop(TransferMode.Move)
@@ -77,6 +90,7 @@ class Timeline {
                             .map(_.toString).toSeq
         content.put(Timeline.dataFormat, items)
         board.setContent(content)
+        logging()
         /* remove */listView.get().getSelectionModel.getSelectedIndices.asScala.map(_.toInt).toSeq
                             .reverse.foreach(index=> value.remove(index))
       }
@@ -95,6 +109,7 @@ class Timeline {
         /* select */ val selectionModel = listView.get().getSelectionModel
           selectionModel.clearSelection()
           selectionModel.selectRange(targetIndex, targetIndex + sources.size)
+
       }
     }
   }
