@@ -13,7 +13,6 @@ import scala.jdk.CollectionConverters._
 class Timeline {
   var timelineLog: List[Vector[Picture]] = List[Vector[Picture]]() // TODO: [Redo] for timeline
   val value = new ObservableBuffer[Picture]
-  value.onChange((it, _)=> println(timelineLog.map(_.size)))
   val view: ListView[Picture] = new ListView[Picture]{
     items.set(value)
     selectionModel.value.setSelectionMode(SelectionMode.Multiple)
@@ -22,14 +21,17 @@ class Timeline {
     onDragDropped = event=>{ FilesDetector.onDragDropped(new DragEvent(event)); event.consume() }
 
     onKeyPressed = event=> {
-      if (event.isControlDown && event.getCode == jfxsi.KeyCode.Z && timelineLog.nonEmpty){
-        value.setAll(timelineLog.head.asJava)
-        timelineLog = timelineLog.drop(1)
-      }
+      if (event.isControlDown && event.getCode == jfxsi.KeyCode.Z) undo()
     }
   }
   def logging(): Unit ={
     timelineLog = value.toVector :: timelineLog.take(9)
+    println(timelineLog.map(_.size))
+  }
+  def undo(): Unit ={
+    if(timelineLog.isEmpty) return
+    value.setAll(timelineLog.head.asJava)
+    timelineLog = timelineLog.drop(1)
   }
 
   object FilesDetector{
