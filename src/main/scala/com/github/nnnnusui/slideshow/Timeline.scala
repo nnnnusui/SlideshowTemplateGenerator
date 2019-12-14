@@ -5,14 +5,15 @@ import java.nio.file.{Files, Path}
 import com.github.nnnnusui.slideshow.Timeline.Picture
 import javafx.scene.{input => jfxsi}
 import scalafx.collections.ObservableBuffer
-import scalafx.scene.control.{ListCell, ListView}
-import scalafx.scene.input.{ClipboardContent, DragEvent, Dragboard, MouseEvent, TransferMode}
+import scalafx.scene.control.{ListCell, ListView, SelectionMode}
+import scalafx.scene.input.{ClipboardContent, DataFormat, DragEvent, Dragboard, MouseEvent, TransferMode}
 
 class Timeline {
   //  val timelineLog = List[ObservableBuffer[Picture]]() // TODO: [Undo, Redo] for timeline
   val value = new ObservableBuffer[Picture]
   val view: ListView[Picture] = new ListView[Picture]{
     items.set(value)
+    selectionModel.value.setSelectionMode(SelectionMode.Multiple)
     //    selectionModel //TODO: support Multiple selection
     cellFactory = _=> new TimelineCell
     onDragOver    = event=>{ FilesDetector.onDragOver(new DragEvent(event));    event.consume() }
@@ -46,7 +47,7 @@ class Timeline {
   }
 
   class TimelineCell extends ListCell[Picture] {
-    item.onChange{ (_, _, value)=> text = if (value== null) "" else value.toString }
+    item.onChange{ (_, _, value)=> text = if (value== null) "" else value.path.getFileName.toString }
     onMouseClicked = event=> if (event.getButton == jfxsi.MouseButton.MIDDLE) remove()
     onDragDetected = event=>{
       LocalSorting.onDetect(new MouseEvent(event))
@@ -57,7 +58,7 @@ class Timeline {
       FilesDetector.onDragOver(new DragEvent(event))
       event.consume()
     }
-    onDragEntered = _=> listView.get().getSelectionModel.select(index.value)
+    onDragEntered = _=> listView.get().getSelectionModel.clearAndSelect(index.value)
     onDragDropped = event=>{
       LocalSorting.onDragDropped(new DragEvent(event))
       FilesDetector.onDragDropped(new DragEvent(event), Seq(value.size, index.value).min)
@@ -68,25 +69,30 @@ class Timeline {
         value.remove(index.value)
     }
     object LocalSorting{
+      import scala.jdk.CollectionConverters._
       def onDetect(event: MouseEvent): Unit ={
         if (item == null) return
         val board = startDragAndDrop(TransferMode.Move)
         val content = new ClipboardContent()
-        content.putString(index.value.toString)
+        val selectedIndexes = listView.get().getSelectionModel.getSelectedIndices.asScala.map(_.toInt).toSeq
+        println(selectedIndexes)
+        content.put(Timeline.dataFormat, selectedIndexes)
         board.setContent(content)
       }
       def onDragOver(event: DragEvent): Unit ={
-        if(!event.getDragboard.hasString) return
+        if(!event.getDragboard.hasContent(Timeline.dataFormat)) return
         event.acceptTransferModes(TransferMode.Move)
       }
       def onDragDropped(event: DragEvent): Unit ={
         val board = event.getDragboard
-        if (!board.hasString) return
-        val sourceIndex = board.getString.toInt
-        val source = value(sourceIndex)
-        value.remove(sourceIndex)
+        if (!board.hasContent(Timeline.dataFormat)) return
+        val sourceIndexes = board.getContent(Timeline.dataFormat).asInstanceOf[List[Int]]
+        val sources = sourceIndexes.map(index=> value(index))
+        sourceIndexes.reverse.foreach(index=> value.remove(index))
         val targetIndex = Seq(index.value, value.size).min
-        value.add(targetIndex, source)
+        value.addAll(targetIndex, sources.asJava)
+        listView.get().getSelectionModel.clearSelection()
+//        listView.get().getSelectionModel.select(targetIndex)
         event.setDropCompleted(true)
       }
     }
@@ -94,7 +100,8 @@ class Timeline {
 }
 
 object Timeline{
+  val dataFormat = new DataFormat("com.github.nnnnusui.slideshow.Timeline.TimelineCell")
   case class Picture(path: Path){
-    override def toString: String = path.getFileName.toString
+    override def toString: String = path.toString
   }
 }
