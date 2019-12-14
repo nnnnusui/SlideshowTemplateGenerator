@@ -1,7 +1,7 @@
 package com.github.nnnnusui.slideshow
 
-class StateLogger[T](value: T){
-  private var timelineLog: List[T] = List(value)
+class StateLogger[T](initValue: T){
+  private var timelineLog: List[T] = List(initValue)
   private var logAccessIndex = 0
   def logging(value: T): Unit ={
     val log = timelineLog.drop(logAccessIndex)
