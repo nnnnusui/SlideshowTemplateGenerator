@@ -1,6 +1,6 @@
 package com.github.nnnnusui.slideshow
 
-import java.nio.file.{Files, Path}
+import java.nio.file.{Files, Path, Paths}
 
 import com.github.nnnnusui.slideshow.Timeline.Picture
 import javafx.scene.{input => jfxsi}
@@ -14,7 +14,6 @@ class Timeline {
   val view: ListView[Picture] = new ListView[Picture]{
     items.set(value)
     selectionModel.value.setSelectionMode(SelectionMode.Multiple)
-    //    selectionModel //TODO: support Multiple selection
     cellFactory = _=> new TimelineCell
     onDragOver    = event=>{ FilesDetector.onDragOver(new DragEvent(event));    event.consume() }
     onDragDropped = event=>{ FilesDetector.onDragDropped(new DragEvent(event)); event.consume() }
@@ -74,10 +73,12 @@ class Timeline {
         if (item == null) return
         val board = startDragAndDrop(TransferMode.Move)
         val content = new ClipboardContent()
-        val selectedIndexes = listView.get().getSelectionModel.getSelectedIndices.asScala.map(_.toInt).toSeq
-        println(selectedIndexes)
-        content.put(Timeline.dataFormat, selectedIndexes)
+        val items = listView.get().getSelectionModel.getSelectedItems.asScala
+                            .map(_.toString).toSeq
+        content.put(Timeline.dataFormat, items)
         board.setContent(content)
+        /* remove */listView.get().getSelectionModel.getSelectedIndices.asScala.map(_.toInt).toSeq
+                            .reverse.foreach(index=> value.remove(index))
       }
       def onDragOver(event: DragEvent): Unit ={
         if(!event.getDragboard.hasContent(Timeline.dataFormat)) return
@@ -86,14 +87,14 @@ class Timeline {
       def onDragDropped(event: DragEvent): Unit ={
         val board = event.getDragboard
         if (!board.hasContent(Timeline.dataFormat)) return
-        val sourceIndexes = board.getContent(Timeline.dataFormat).asInstanceOf[List[Int]]
-        val sources = sourceIndexes.map(index=> value(index))
-        sourceIndexes.reverse.foreach(index=> value.remove(index))
+        val sources = board.getContent(Timeline.dataFormat).asInstanceOf[List[String]]
+                           .map(str=> Picture(Paths.get(str)))
         val targetIndex = Seq(index.value, value.size).min
         value.addAll(targetIndex, sources.asJava)
-        listView.get().getSelectionModel.clearSelection()
-//        listView.get().getSelectionModel.select(targetIndex)
         event.setDropCompleted(true)
+        /* select */ val selectionModel = listView.get().getSelectionModel
+          selectionModel.clearSelection()
+          selectionModel.selectRange(targetIndex, targetIndex + sources.size)
       }
     }
   }
