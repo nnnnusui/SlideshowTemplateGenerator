@@ -3,6 +3,8 @@ package com.github.nnnnusui.slideshow
 import com.github.nnnnusui.slideshow.Exo.Object.{MediaObject, Parameter, TimelineObject}
 
 object TemplateGenerator {
+  def generate(bpm: Int, fps: Int, step: Int, size: Int): Seq[TimelineObject]
+    = generate(bpm, fps, step, Seq.fill(size) { MediaObject.Picture("") })
   def generate(bpm: Int, fps: Int, step: Int, objects: Seq[MediaObject]): Seq[TimelineObject] ={
     val framePerBeat = (fps * 60) / bpm.toDouble
     objects.zipWithIndex.map{ case (obj, index)=>
