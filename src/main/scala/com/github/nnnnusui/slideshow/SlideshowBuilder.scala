@@ -1,4 +1,5 @@
-package com.github.nnnnusui.slideshow
+package com.github.nnnnusui
+package slideshow
 
 import java.nio.charset.Charset
 import java.nio.file.{Files, Paths}

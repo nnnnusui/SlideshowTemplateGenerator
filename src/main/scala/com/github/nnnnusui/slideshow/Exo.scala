@@ -1,4 +1,5 @@
-package com.github.nnnnusui.slideshow
+package com.github.nnnnusui
+package slideshow
 
 import com.github.nnnnusui.slideshow.Exo.Object.{MediaObject, Parameter}
 
