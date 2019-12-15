@@ -1,7 +1,7 @@
 package com.github.nnnnusui
-package slideshow
+package slideshow.exo
 
-import com.github.nnnnusui.slideshow.Exo.Object.{FilterObject, MediaObject}
+import com.github.nnnnusui.slideshow.exo.Exo.Object.{FilterObject, MediaObject}
 
 case class Exo(header: Exo.Header, objects: Seq[Exo.TimelineObject]){
   def toExo: String

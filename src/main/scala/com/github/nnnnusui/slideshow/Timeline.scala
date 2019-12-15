@@ -3,8 +3,9 @@ package slideshow
 
 import java.nio.file.{Path, Paths}
 
-import com.github.nnnnusui.slideshow.Exo.TimelineObject
 import com.github.nnnnusui.slideshow.Timeline.Object.Picture
+import com.github.nnnnusui.slideshow.exo.Exo
+import com.github.nnnnusui.slideshow.exo.Exo.TimelineObject
 import javafx.scene.{input => jfxsi}
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.control.{ListCell, ListView, SelectionMode}

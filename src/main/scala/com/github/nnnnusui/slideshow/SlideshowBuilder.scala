@@ -4,6 +4,7 @@ package slideshow
 import java.nio.charset.Charset
 import java.nio.file.{Files, Paths}
 
+import com.github.nnnnusui.slideshow.exo.Exo
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.scene.Scene
