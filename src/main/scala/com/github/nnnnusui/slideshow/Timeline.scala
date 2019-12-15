@@ -1,12 +1,12 @@
 package com.github.nnnnusui.slideshow
 
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Path, Paths}
 
-import com.github.nnnnusui.slideshow.Timeline.Picture
+import com.github.nnnnusui.slideshow.Timeline.Object.Picture
 import javafx.scene.{input => jfxsi}
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.control.{ListCell, ListView, SelectionMode}
-import scalafx.scene.input.{ClipboardContent, DataFormat, DragEvent, Dragboard, MouseEvent, TransferMode}
+import scalafx.scene.input._
 
 import scala.jdk.CollectionConverters._
 
@@ -19,7 +19,6 @@ class Timeline {
     cellFactory = _=> new TimelineCell
     onDragOver    = event=>{ FilesDetector.onDragOver(new DragEvent(event));                event.consume() }
     onDragDropped = event=>{ FilesDetector.onDragDropped(new DragEvent(event), onDetect()); event.consume() }
-
     onKeyPressed = event=> {
       event.getCode match {
         case it if it == jfxsi.KeyCode.Z && event.isControlDown
@@ -94,7 +93,16 @@ class Timeline {
 
 object Timeline{
   val dataFormat = new DataFormat("com.github.nnnnusui.slideshow.Timeline.TimelineCell")
-  case class Picture(path: Path){
-    override def toString: String = path.toString
+  sealed trait Object
+  object Object{
+    def toExoObjects(objects: List[Object]): List[Exo.Object.MediaObject] ={
+      if (objects.isEmpty) return List.empty
+      (objects.head match {
+        case Picture(path) => Exo.Object.MediaObject.Picture(path.toString)
+      }) :: toExoObjects(objects.tail)
+    }
+    case class Picture(path: Path) extends Object {
+      override def toString: String = path.toString
+    }
   }
 }
