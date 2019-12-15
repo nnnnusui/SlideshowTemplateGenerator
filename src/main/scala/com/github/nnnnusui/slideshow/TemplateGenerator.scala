@@ -1,6 +1,7 @@
 package com.github.nnnnusui.slideshow
 
-import com.github.nnnnusui.slideshow.Exo.Object.{MediaObject, Parameter, TimelineObject}
+import com.github.nnnnusui.slideshow.Exo.Object.{MediaObject, Parameter}
+import com.github.nnnnusui.slideshow.Exo.TimelineObject
 
 object TemplateGenerator {
   def generate(bpm: Int, fps: Int, step: Int, size: Int): Seq[TimelineObject]
@@ -14,14 +15,14 @@ object TemplateGenerator {
         val end   = (framePerBeat * (barCount + step)).toInt
         Parameter(start, end)
       }
-      TimelineObject(index, parameter, obj)
+      TimelineObject(parameter, obj)
     }
   }
 }
 
-case class Exo(header: Exo.Header, objects: Seq[Exo.Object.TimelineObject]){
+case class Exo(header: Exo.Header, objects: Seq[Exo.TimelineObject]){
   def toExo: String
-    = (header :: objects.toList).map(_.toExo).mkString("\n")
+    = (header.toExo :: objects.zipWithIndex.map{case(obj, index)=> obj.toExo(index)}.toList).mkString("\n")
 }
 object Exo{
   case class Header(width: Int, height: Int, rate: Int
@@ -40,21 +41,21 @@ object Exo{
           |audio_rate=$audioRate
           |audio_ch=$audioCh""".stripMargin
   }
+  case class TimelineObject(parameter: Parameter, obj: MediaObject
+                            //,effects: Seq[FilterEffect] = Seq.empty
+                           ){
+    def toExo(index: Int): String
+    =s"""[$index]
+        |${parameter.toExo}
+        |[$index.0]
+        |${obj.toExo}
+        |[$index.1]
+        |_name=標準描画
+        |拡大率=100.00""".stripMargin
+  }
 
   sealed trait Object{ def toExo: String }
   object Object{
-    case class TimelineObject(index: Int, parameter: Parameter, obj: MediaObject
-                             //,effects: Seq[FilterEffect] = Seq.empty
-                             ) extends Object{
-      def toExo: String
-        =s"""[$index]
-            |${parameter.toExo}
-            |[$index.0]
-            |${obj.toExo}
-            |[$index.1]
-            |_name=標準描画
-            |拡大率=100.00""".stripMargin
-    }
     case class Parameter(start: Int, end: Int
                         ,layer:   Int = 1
                         ,overlay: Int = 1
