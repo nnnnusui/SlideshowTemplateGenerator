@@ -17,45 +17,25 @@ class Timeline {
     items.set(value)
     selectionModel.value.setSelectionMode(SelectionMode.Multiple)
     cellFactory = _=> new TimelineCell
-    onDragOver    = event=>{ FilesDetector.onDragOver(new DragEvent(event));    event.consume() }
-    onDragDropped = event=>{ FilesDetector.onDragDropped(new DragEvent(event)); event.consume() }
+    onDragOver    = event=>{ FilesDetector.onDragOver(new DragEvent(event));                event.consume() }
+    onDragDropped = event=>{ FilesDetector.onDragDropped(new DragEvent(event), onDetect()); event.consume() }
 
     onKeyPressed = event=> {
       event.getCode match {
-        case it if it == jfxsi.KeyCode.Z && event.isControlDown && event.isShiftDown
-          => value.setAll(valueLogger.redo().asJava)
         case it if it == jfxsi.KeyCode.Z && event.isControlDown
-          => value.setAll(valueLogger.undo().asJava)
+          => value.setAll((if (event.isShiftDown) valueLogger.redo()
+                           else                   valueLogger.undo()).asJava)
         case _ =>
       }
     }
   }
-
-  object FilesDetector{
-    def onDragOver(event: DragEvent): Unit ={
-      if(!event.getDragboard.hasFiles) return
-      event.acceptTransferModes(TransferMode.Link)
-    }
-    def onDragDropped(event: DragEvent, index: Int = 0): Unit ={
-      import scala.jdk.CollectionConverters._
-      val board = new Dragboard(event.getDragboard)
-      if (!board.hasFiles) return
-      val pictures = walkFiles(board).map(it=> Picture(it.toAbsolutePath))
-      value.addAll(index, pictures.asJava)
-      event.setDropCompleted(true)
-      valueLogger.logging(value.toVector)
-    }
-    private def walkFiles(dragboard: Dragboard): Seq[Path] ={
-      dragboard.getFiles.asScala
-        .map(_.toPath)
-        .flatMap { it =>
-          if (Files.isDirectory(it))
-            Files.walk(it).filter(it => !Files.isDirectory(it))
-              .iterator().asScala.toSeq
-          else Seq(it)
-        }.toSeq
-    }
+  private def onDetect(targetIndex: Int = 0): Seq[Path] => Unit = paths =>{
+    val pictures = paths.map(it=> Picture(it.toAbsolutePath))
+    value.addAll(targetIndex, pictures.asJava)
+    valueLogger.logging(value.toVector)
   }
+
+
 
   class TimelineCell extends ListCell[Picture] {
     item.onChange{ (_, _, value)=> text = if (value== null) "" else value.path.getFileName.toString }
@@ -72,7 +52,7 @@ class Timeline {
     onDragEntered = _=> listView.get().getSelectionModel.clearAndSelect(index.value)
     onDragDropped = event=>{
       LocalSorting.onDragDropped(new DragEvent(event))
-      FilesDetector.onDragDropped(new DragEvent(event), Seq(value.size, index.value).min)
+      FilesDetector.onDragDropped(new DragEvent(event), onDetect(Seq(value.size, index.value).min))
       event.consume()
     }
     private def remove(): Unit = {
