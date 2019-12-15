@@ -1,4 +1,6 @@
-package com.github.nnnnusui.slideshow.exo.filtereffect
+package com.github.nnnnusui
+package slideshow
+package exo.filtereffect
 
 import com.github.nnnnusui.slideshow.exo.FilterEffect
 

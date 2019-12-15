@@ -1,4 +1,6 @@
-package com.github.nnnnusui.slideshow.exo.mediaobject
+package com.github.nnnnusui
+package slideshow
+package exo.mediaobject
 
 import com.github.nnnnusui.slideshow.exo.MediaObject
 

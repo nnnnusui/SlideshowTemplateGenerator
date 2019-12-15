@@ -1,4 +1,6 @@
-package com.github.nnnnusui.slideshow.exo.filterobject
+package com.github.nnnnusui
+package slideshow
+package exo.filterobject
 
 import com.github.nnnnusui.slideshow.exo.FilterObject
 

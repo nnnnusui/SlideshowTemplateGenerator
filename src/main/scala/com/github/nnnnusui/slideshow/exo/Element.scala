@@ -1,4 +1,6 @@
-package com.github.nnnnusui.slideshow.exo
+package com.github.nnnnusui
+package slideshow
+package exo
 
 sealed trait Element{ def toExo: String }
 trait FilterEffect extends Element
