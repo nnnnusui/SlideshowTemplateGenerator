@@ -1,7 +1,7 @@
 package com.github.nnnnusui
 package slideshow
 
-import com.github.nnnnusui.slideshow.Exo.Object.{MediaObject, Parameter}
+import com.github.nnnnusui.slideshow.Exo.Object.{FilterObject, MediaObject}
 
 case class Exo(header: Exo.Header, objects: Seq[Exo.TimelineObject]){
   def toExo: String
@@ -24,38 +24,63 @@ object Exo{
           |audio_rate=$audioRate
           |audio_ch=$audioCh""".stripMargin
   }
-  case class TimelineObject(parameter: Parameter, obj: MediaObject
-                           ,effects: List[Object.FilterEffect] = List.empty
-                           ){
+
+  case class Parameter(start: Int, end: Int
+                       ,layer:   Int = 1
+                       ,overlay: Int = 1
+                       ,camera:  Int = 0){
+    def toExo(obj: Object): String = {
+      val x = obj match {
+        case _: MediaObject  =>s"\noverlay=$overlay\ncamera=$camera"
+        case _: FilterObject =>""
+      }
+      s"""start=$start
+         |end=$end
+         |layer=$layer""".stripMargin + s"$x"
+    }
+  }
+  case class TimelineObject(parameter: Parameter, obj: Object
+                         ,effects: List[Object.FilterEffect] = List.empty
+                        ) {
     def toExo(index: Int): String = {
-      val objectsStr = (obj :: effects).zipWithIndex.flatMap{case(it, itIndex)=>
+      val objectsStr = (obj :: effects).zipWithIndex.flatMap { case (it, itIndex) =>
         List(s"[$index.$itIndex]", it.toExo)
       }.mkString("\n")
       s"""[$index]
-         |${parameter.toExo}
+         |${parameter.toExo(obj)}
          |$objectsStr""".stripMargin
     }
   }
-
   sealed trait Object{ def toExo: String }
   object Object{
-    case class Parameter(start: Int, end: Int
-                        ,layer:   Int = 1
-                        ,overlay: Int = 1
-                        ,camera:  Int = 0) extends Object{
-      def toExo: String
-        =s"""start=$start
-            |end=$end
-            |layer=$layer
-            |overlay=$overlay
-            |camera=$camera""".stripMargin
-    }
     sealed trait MediaObject extends Object
     object MediaObject{
       case class Picture(filePath: String) extends MediaObject{
         def toExo: String
           =s"""_name=画像ファイル
               |file=$filePath""".stripMargin
+      }
+    }
+    sealed trait FilterObject extends Object
+    object FilterObject{
+      case class SceneChange(adjustment: Double = 0.00
+                            ,track1: Double = 0.00
+                            ,flip: Double = 0
+                            ,check0: Int = 0
+                            ,_type: Int = 0
+                            ,filter: Int = 0
+                            ,name: String = ""
+                            ,param: String = "*") extends FilterObject{
+        def toExo: String
+        =s"""_name=シーンチェンジ
+            |調整=$adjustment
+            |track1=$track1
+            |反転=$flip
+            |check0=$check0
+            |type=${_type}
+            |filter=$filter
+            |name=$name
+            |param=$param""".stripMargin
       }
     }
     sealed trait FilterEffect extends Object

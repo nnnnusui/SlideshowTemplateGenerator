@@ -120,8 +120,8 @@ object Timeline{
           val start = parameter.getStartFrame(count)
           val end   = parameter.getEndFrame(count)
           val next  = parameter.getNextStepCount(count)
-          val exoParameter = Exo.Object.Parameter(start, end)
-          TimelineObject(exoParameter, picture, effects) :: toExoObjects(objects.tail, parameter, next, effects)
+          val exoParameter = Exo.Parameter(start, end)
+          Exo.TimelineObject(exoParameter, picture, effects) :: toExoObjects(objects.tail, parameter, next, effects)
       }
     }
 //    case class ParameterChange(bpm: Option[Int], step: Option[Int]) extends Object

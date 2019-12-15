@@ -72,7 +72,7 @@ object SlideshowBuilder extends JFXApp{
     }
   }
 
-  def saveToExo(): Unit ={
+  private def saveToExo(): Unit ={
     val chooser = new FileChooser()
     chooser.initialDirectory = Paths.get(".").toFile
     chooser.extensionFilters.add(new ExtensionFilter("AviUtl", "*.exo"))
@@ -83,8 +83,13 @@ object SlideshowBuilder extends JFXApp{
 
     import Parameter._
     val header = Exo.Header(width, height, fps)
-    val timelineObjects = Timeline.Object.toExoObjects(timeline.value.toList, fps, bpm, step)
-    val exo = Exo(header, timelineObjects)
+    val objects = Timeline.Object.toExoObjects(timeline.value.toList, fps, bpm, step)
+    val filters = objects.tail.map { it =>
+      val parameter = Exo.Parameter(it.parameter.start, it.parameter.start +4, layer = it.parameter.layer +1)
+      val filter = Exo.Object.FilterObject.SceneChange()
+      Exo.TimelineObject(parameter,filter)
+    }
+    val exo = Exo(header, objects ::: filters)
     Files.writeString(result.toPath, exo.toExo, Charset.forName("Shift_JIS"))
   }
 }
