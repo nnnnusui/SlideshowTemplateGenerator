@@ -4,8 +4,9 @@ package slideshow
 import java.nio.file.{Path, Paths}
 
 import com.github.nnnnusui.slideshow.Timeline.Object.Picture
-import com.github.nnnnusui.slideshow.exo.Exo
-import com.github.nnnnusui.slideshow.exo.Exo.TimelineObject
+import com.github.nnnnusui.slideshow.exo.TimelineObject
+import com.github.nnnnusui.slideshow.exo.TimelineObject.Parameter
+import com.github.nnnnusui.slideshow.exo.filtereffect.StandardDrawing
 import javafx.scene.{input => jfxsi}
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.control.{ListCell, ListView, SelectionMode}
@@ -105,9 +106,8 @@ object Timeline{
   sealed trait Object
   object Object{
     def toExoObjects(objects: List[Object], fps: Int, bpm: Int, step: Int): List[TimelineObject]
-      = toExoObjects(objects, ChangedParameter(fps, bpm, step), 0, List(Exo.Object.FilterEffect.StandardDrawing()))
-    def toExoObjects(objects: List[Object], parameter: ChangedParameter, count: Int, effects: List[Exo.Object.FilterEffect]): List[TimelineObject] ={
-      import Exo.Object.MediaObject
+      = toExoObjects(objects, ChangedParameter(fps, bpm, step), 0, List(StandardDrawing()))
+    def toExoObjects(objects: List[Object], parameter: ChangedParameter, count: Int, effects: List[exo.FilterEffect]): List[TimelineObject] ={
       if (objects.isEmpty) return List.empty
       objects.head match {
 //        case ParameterChange(bpm, step) =>
@@ -117,12 +117,12 @@ object Timeline{
 //                                       ,step.getOrElse(parameter.step))
 //                      ,parameter.getNextStepCount(count)               )
         case Picture(path) =>
-          val picture = MediaObject.Picture(path.toString)
+          val picture = exo.mediaobject.Picture(path.toString)
           val start = parameter.getStartFrame(count)
           val end   = parameter.getEndFrame(count)
           val next  = parameter.getNextStepCount(count)
-          val exoParameter = Exo.Parameter(start, end)
-          Exo.TimelineObject(exoParameter, picture, effects) :: toExoObjects(objects.tail, parameter, next, effects)
+          val exoParameter = Parameter(start, end)
+          TimelineObject(exoParameter, picture, effects) :: toExoObjects(objects.tail, parameter, next, effects)
       }
     }
 //    case class ParameterChange(bpm: Option[Int], step: Option[Int]) extends Object

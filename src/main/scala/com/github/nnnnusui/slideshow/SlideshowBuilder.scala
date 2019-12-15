@@ -4,7 +4,8 @@ package slideshow
 import java.nio.charset.Charset
 import java.nio.file.{Files, Paths}
 
-import com.github.nnnnusui.slideshow.exo.Exo
+import com.github.nnnnusui.slideshow.exo.{Exo, TimelineObject}
+import com.github.nnnnusui.slideshow.exo.filterobject.SceneChange
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.scene.Scene
@@ -86,9 +87,9 @@ object SlideshowBuilder extends JFXApp{
     val header = Exo.Header(width, height, fps)
     val objects = Timeline.Object.toExoObjects(timeline.value.toList, fps, bpm, step)
     val filters = objects.tail.map { it =>
-      val parameter = Exo.Parameter(it.parameter.start, it.parameter.start +4, layer = it.parameter.layer +1)
-      val filter = Exo.Object.FilterObject.SceneChange()
-      Exo.TimelineObject(parameter,filter)
+      val parameter = TimelineObject.Parameter(it.parameter.start, it.parameter.start +4, layer = it.parameter.layer +1)
+      val filter = SceneChange()
+      TimelineObject(parameter,filter)
     }
     val exo = Exo(header, objects ::: filters)
     Files.writeString(result.toPath, exo.toExo, Charset.forName("Shift_JIS"))
