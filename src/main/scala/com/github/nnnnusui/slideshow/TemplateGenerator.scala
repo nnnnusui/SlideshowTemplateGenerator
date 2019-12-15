@@ -50,7 +50,10 @@ object Exo{
         =s"""[$index]
             |${parameter.toExo}
             |[$index.0]
-            |${obj.toExo}""".stripMargin
+            |${obj.toExo}
+            |[$index.1]
+            |_name=標準描画
+            |拡大率=100.00""".stripMargin
     }
     case class Parameter(start: Int, end: Int
                         ,layer:   Int = 1
