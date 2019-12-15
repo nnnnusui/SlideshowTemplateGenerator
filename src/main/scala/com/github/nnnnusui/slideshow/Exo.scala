@@ -1,24 +1,6 @@
 package com.github.nnnnusui.slideshow
 
 import com.github.nnnnusui.slideshow.Exo.Object.{MediaObject, Parameter}
-import com.github.nnnnusui.slideshow.Exo.TimelineObject
-
-object TemplateGenerator {
-  def generate(bpm: Int, fps: Int, step: Int, size: Int): Seq[TimelineObject]
-    = generate(bpm, fps, step, Seq.fill(size) { MediaObject.Picture("") })
-  def generate(bpm: Int, fps: Int, step: Int, objects: Seq[MediaObject]): Seq[TimelineObject] ={
-    val framePerBeat = (fps * 60) / bpm.toDouble
-    objects.zipWithIndex.map{ case (obj, index)=>
-      val barCount = index * step
-      val parameter = {
-        val start = (framePerBeat * barCount).toInt + 1
-        val end   = (framePerBeat * (barCount + step)).toInt
-        Parameter(start, end)
-      }
-      TimelineObject(parameter, obj)
-    }
-  }
-}
 
 case class Exo(header: Exo.Header, objects: Seq[Exo.TimelineObject]){
   def toExo: String
@@ -42,16 +24,16 @@ object Exo{
           |audio_ch=$audioCh""".stripMargin
   }
   case class TimelineObject(parameter: Parameter, obj: MediaObject
-                            //,effects: Seq[FilterEffect] = Seq.empty
+                           ,effects: List[Object.FilterEffect] = List.empty
                            ){
-    def toExo(index: Int): String
-    =s"""[$index]
-        |${parameter.toExo}
-        |[$index.0]
-        |${obj.toExo}
-        |[$index.1]
-        |_name=標準描画
-        |拡大率=100.00""".stripMargin
+    def toExo(index: Int): String = {
+      val objectsStr = (obj :: effects).zipWithIndex.flatMap{case(it, itIndex)=>
+        List(s"[$index.$itIndex]", it.toExo)
+      }.mkString("\n")
+      s"""[$index]
+         |${parameter.toExo}
+         |$objectsStr""".stripMargin
+    }
   }
 
   sealed trait Object{ def toExo: String }
@@ -77,7 +59,21 @@ object Exo{
     }
     sealed trait FilterEffect extends Object
     object FilterEffect{
-
+      case class StandardDrawing(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0
+                                 ,magnification: Double = 100.00
+                                 ,transparency:  Double = 0.0
+                                 ,rotation: Double = 0.00
+                                 ,blend: Int = 0) extends FilterEffect {
+        def toExo: String
+        =s"""_name=標準描画
+            |X=$x
+            |Y=$y
+            |Z=$z
+            |拡大率=$magnification
+            |透明度=$transparency
+            |回転=$rotation
+            |blend=$blend""".stripMargin
+      }
     }
   }
 }

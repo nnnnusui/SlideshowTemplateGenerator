@@ -7,9 +7,9 @@ import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.scene.Scene
 import scalafx.scene.control.{Button, Label, TextField}
-import scalafx.scene.layout.{BorderPane, GridPane, HBox}
-import scalafx.stage.{FileChooser, Stage}
+import scalafx.scene.layout.{BorderPane, GridPane}
 import scalafx.stage.FileChooser.ExtensionFilter
+import scalafx.stage.{FileChooser, Stage}
 
 object SlideshowBuilder extends JFXApp{
   val timeline = new Timeline
@@ -80,10 +80,9 @@ object SlideshowBuilder extends JFXApp{
     if (result == null) return
     if (timeline.value.isEmpty) return
 
-    import Parameter.{width, height, fps, bpm, step}
+    import Parameter._
     val header = Exo.Header(width, height, fps)
-    val objects = Timeline.Object.toExoObjects(timeline.value.toList)
-    val timelineObjects = TemplateGenerator.generate(bpm, fps, step, objects)
+    val timelineObjects = Timeline.Object.toExoObjects(timeline.value.toList, fps, bpm, step)
     val exo = Exo(header, timelineObjects)
     Files.writeString(result.toPath, exo.toExo, Charset.forName("Shift_JIS"))
   }
