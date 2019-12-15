@@ -9,7 +9,7 @@ import com.github.nnnnusui.slideshow.exo.filterobject.SceneChange
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.scene.Scene
-import scalafx.scene.control.{Button, Label, TextField}
+import scalafx.scene.control.{Button, Label, SplitPane, TextField}
 import scalafx.scene.layout.{BorderPane, GridPane}
 import scalafx.stage.FileChooser.ExtensionFilter
 import scalafx.stage.{FileChooser, Stage}
@@ -25,12 +25,15 @@ object SlideshowBuilder extends JFXApp{
     title = "Slideshow Builder"
     scene = new Scene{
       root = new BorderPane{
-        center = timeline.view
-        bottom = new BorderPane{
-          left = settingsButton
-          center = label
-          right = saveButton
+        center = new BorderPane{
+          center = timeline.listView
+          bottom = new BorderPane{
+            left = settingsButton
+            center = label
+            right = saveButton
+          }
         }
+        right = timeline.preview
       }
     }
   }

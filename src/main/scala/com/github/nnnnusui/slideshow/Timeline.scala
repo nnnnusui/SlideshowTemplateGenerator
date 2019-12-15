@@ -11,16 +11,16 @@ import javafx.scene.{input => jfxsi}
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.control.{ListView, SelectionMode}
 import scalafx.scene.input._
+import scalafx.scene.layout.BorderPane
 
 import scala.jdk.CollectionConverters._
 
 class Timeline {
   val value = new ObservableBuffer[Picture]
   val valueLogger = new StateLogger(value.toVector)
-  val view: ListView[Picture] = new ListView[Picture]{
+  val listView: ListView[Picture] = new ListView[Picture]{
     items.set(value)
     selectionModel.value.setSelectionMode(SelectionMode.Multiple)
-    cellFactory = _=> new TimelineCell(this[Timeline])
     onDragOver    = event=>{ FilesDetector.onDragOver(new DragEvent(event));                event.consume() }
     onDragDropped = event=>{ FilesDetector.onDragDropped(new DragEvent(event), onDetect()); event.consume() }
     onKeyPressed = event=> {
@@ -32,6 +32,8 @@ class Timeline {
       }
     }
   }
+  listView.cellFactory = _=> new TimelineCell(this)
+  var preview = new BorderPane
   def onDetect(targetIndex: Int = 0): Seq[Path] => Unit = paths =>{
     val pictures = paths.map(it=> Picture(it.toAbsolutePath))
     value.addAll(targetIndex, pictures.asJava)

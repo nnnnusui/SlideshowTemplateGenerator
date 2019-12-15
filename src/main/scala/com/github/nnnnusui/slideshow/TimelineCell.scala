@@ -5,12 +5,29 @@ import java.nio.file.Paths
 import com.github.nnnnusui.slideshow.Timeline.Object.Picture
 import javafx.scene.{input => jfxsi}
 import scalafx.scene.control.ListCell
+import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.input.{ClipboardContent, DragEvent, MouseEvent, TransferMode}
 
 import scala.jdk.CollectionConverters._
 
 class TimelineCell(val tl: Timeline) extends ListCell[Picture] {
-  item.onChange{ (_, _, value)=> text = if (value== null) "" else value.path.getFileName.toString }
+  val preview: ImageView = new ImageView{
+    preserveRatio = true
+    minWidth(0)
+    minHeight(0)
+  }
+  item.onChange{ (_, _, value)=>
+    text = if (value == null) "" else value.path.getFileName.toString
+    if (value != null){
+      preview.image = new Image(value.path.toUri.toString
+                               ,preview.fitHeight.value
+                               ,preview.fitWidth.value
+                               ,true, true)
+      preview.fitHeight <== tl.preview.height
+      preview.fitWidth  <== tl.preview.width
+    }
+  }
+  selected.onChange { (_, _, value) => if (value) tl.preview.center = preview }
   onMouseClicked = event=> if (event.getButton == jfxsi.MouseButton.MIDDLE) remove()
   onDragDetected = event=>{
     LocalSorting.onDetect(new MouseEvent(event))
@@ -28,8 +45,9 @@ class TimelineCell(val tl: Timeline) extends ListCell[Picture] {
     event.consume()
   }
   private def remove(): Unit = {
-    if(!empty.value)
-      tl.value.remove(index.value)
+    if(empty.value) return
+    tl.value.remove(index.value)
+    tl.valueLogger.logging(tl.value.toVector)
   }
   object LocalSorting{
     def onDetect(event: MouseEvent): Unit ={
