@@ -21,6 +21,7 @@ libraryDependencies ++= javaFXModules.map( m =>
 )
 
 assemblyMergeStrategy in assembly := {
+  case PathList(ps @ _*) if ps.last endsWith ".jar:module-info.class" => MergeStrategy.first
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
