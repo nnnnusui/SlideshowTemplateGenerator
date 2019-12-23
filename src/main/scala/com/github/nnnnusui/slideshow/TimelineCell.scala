@@ -10,24 +10,9 @@ import scalafx.scene.input.{ClipboardContent, DragEvent, MouseEvent, TransferMod
 
 import scala.jdk.CollectionConverters._
 
-class TimelineCell(val tl: Timeline) extends ListCell[Picture] {
-  val preview: ImageView = new ImageView{
-    preserveRatio = true
-    minWidth(0)
-    minHeight(0)
-  }
-  item.onChange{ (_, _, value)=>
-    text = if (value == null) "" else value.path.getFileName.toString
-    if (value != null){
-      preview.image = new Image(value.path.toUri.toString
-                               ,preview.fitHeight.value
-                               ,preview.fitWidth.value
-                               ,true, true)
-      preview.fitHeight <== tl.preview.height
-      preview.fitWidth  <== tl.preview.width
-    }
-  }
-  selected.onChange { (_, _, value) => if (value) tl.preview.center = preview }
+class TimelineCell(val tl: Timeline) extends ListCell[Timeline.Object] {
+  item.onChange{ (_, _, value)=> text = if (value == null) "" else value.name }
+  selected.onChange { (_, _, value) => if (value) tl.preview.center = item.value.view }
   onMouseClicked = event=> if (event.getButton == jfxsi.MouseButton.MIDDLE) remove()
   onDragDetected = event=>{
     LocalSorting.onDetect(new MouseEvent(event))

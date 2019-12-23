@@ -10,6 +10,7 @@ import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.scene.Scene
 import scalafx.scene.control.{Button, Label, SplitPane, TextField}
+import scalafx.scene.input.{ClipboardContent, TransferMode}
 import scalafx.scene.layout.{BorderPane, GridPane}
 import scalafx.stage.FileChooser.ExtensionFilter
 import scalafx.stage.{FileChooser, Stage}
@@ -25,15 +26,15 @@ object SlideshowBuilder extends JFXApp{
     title = "Slideshow Builder"
     scene = new Scene{
       root = new BorderPane{
-        center = new BorderPane{
-          center = timeline.listView
+        left = new BorderPane{
+          center = timeline.view
           bottom = new BorderPane{
             left = settingsButton
             center = label
             right = saveButton
           }
         }
-        right = timeline.preview
+        center = timeline.preview
       }
     }
   }

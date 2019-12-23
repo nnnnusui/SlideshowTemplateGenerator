@@ -8,17 +8,20 @@ import com.github.nnnnusui.slideshow.exo.TimelineObject
 import com.github.nnnnusui.slideshow.exo.TimelineObject.Parameter
 import com.github.nnnnusui.slideshow.exo.filtereffect.StandardDrawing
 import javafx.scene.{input => jfxsi}
+import scalafx.application.Platform
 import scalafx.collections.ObservableBuffer
-import scalafx.scene.control.{ListView, SelectionMode}
+import scalafx.scene.Node
+import scalafx.scene.control.{Button, ListView, SelectionMode, TextArea}
+import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.input._
 import scalafx.scene.layout.BorderPane
 
 import scala.jdk.CollectionConverters._
 
 class Timeline {
-  val value = new ObservableBuffer[Picture]
+  val value = new ObservableBuffer[Timeline.Object]
   val valueLogger = new StateLogger(value.toVector)
-  val listView: ListView[Picture] = new ListView[Picture]{
+  val listView: ListView[Timeline.Object] = new ListView[Timeline.Object]{
     items.set(value)
     selectionModel.value.setSelectionMode(SelectionMode.Multiple)
     onDragOver    = event=>{ FilesDetector.onDragOver(new DragEvent(event));                event.consume() }
@@ -30,6 +33,12 @@ class Timeline {
                            else                   valueLogger.undo()).asJava)
         case _ =>
       }
+    }
+  }
+  val view = new BorderPane{
+    center = listView
+    bottom = new Button("add Property"){
+      onAction = _=> value.add(Timeline.Object.ChangeExo(""))
     }
   }
   listView.cellFactory = _=> new TimelineCell(this)
@@ -49,7 +58,10 @@ object Timeline{
     def getEndFrame(count: Int): Int = (framePerBeat * (count+step)).toInt
     def getNextStepCount(current: Int): Int = current + step
   }
-  sealed trait Object
+  sealed trait Object {
+    val name: String
+    val view: Node
+  }
   object Object{
     def toExoObjects(objects: List[Object], fps: Int, bpm: Int, step: Int): List[TimelineObject]
       = toExoObjects(objects, ChangedParameter(fps, bpm, step), 0, List(StandardDrawing()))
@@ -74,7 +86,31 @@ object Timeline{
 //    case class ParameterChange(bpm: Option[Int], step: Option[Int]) extends Object
     case class Picture(path: Path) extends Object {
       override def toString: String = path.toString
+      val name: String = path.getFileName.toString
+      val view: Node = new ImageView{
+        preserveRatio = true
+        minWidth(0)
+        minHeight(0)
+        Platform.runLater{()=> image = new Image(path.toUri.toString) }
+        //      preview.image = new Image(value.path.toUri.toString
+        //                               ,preview.fitHeight.value
+        //                               ,preview.fitWidth.value
+        //                               ,true, true)
+        //      preview.fitHeight <== tl.preview.height
+        //      preview.fitWidth  <== tl.preview.width
+      }
     }
-//    case class Effect() extends Object
+    case class ChangeExo(var exo: String) extends Object {
+      val name: String = "change exo"
+      val view: Node = new TextArea{
+        text.onChange{(_, _, value)=> exo = value}
+      }
+    }
+    class Exo{
+      override def toString: String
+        =s"""
+            |
+            |""".stripMargin
+    }
   }
 }
