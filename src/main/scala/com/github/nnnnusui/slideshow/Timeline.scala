@@ -11,10 +11,10 @@ import javafx.scene.{input => jfxsi}
 import scalafx.application.Platform
 import scalafx.collections.ObservableBuffer
 import scalafx.scene.Node
-import scalafx.scene.control.{Button, ListView, SelectionMode, TextArea}
+import scalafx.scene.control.{ListView, SelectionMode}
 import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.input._
-import scalafx.scene.layout.BorderPane
+import scalafx.scene.layout.{BorderPane, Pane}
 
 import scala.jdk.CollectionConverters._
 
@@ -37,9 +37,6 @@ class Timeline {
   }
   val view = new BorderPane{
     center = listView
-    bottom = new Button("add Property"){
-      onAction = _=> value.add(Timeline.Object.ChangeExo(""))
-    }
   }
   listView.cellFactory = _=> new TimelineCell(this)
   var preview = new BorderPane
@@ -60,7 +57,7 @@ object Timeline{
   }
   sealed trait Object {
     val name: String
-    val view: Node
+    def getView(pa: Pane): Node
   }
   object Object{
     def toExoObjects(objects: List[Object], fps: Int, bpm: Int, step: Int): List[TimelineObject]
@@ -87,23 +84,13 @@ object Timeline{
     case class Picture(path: Path) extends Object {
       override def toString: String = path.toString
       val name: String = path.getFileName.toString
-      val view: Node = new ImageView{
+      def getView(pa: Pane): Node = new ImageView{
         preserveRatio = true
         minWidth(0)
         minHeight(0)
         Platform.runLater{()=> image = new Image(path.toUri.toString) }
-        //      preview.image = new Image(value.path.toUri.toString
-        //                               ,preview.fitHeight.value
-        //                               ,preview.fitWidth.value
-        //                               ,true, true)
-        //      preview.fitHeight <== tl.preview.height
-        //      preview.fitWidth  <== tl.preview.width
-      }
-    }
-    case class ChangeExo(var exo: String) extends Object {
-      val name: String = "change exo"
-      val view: Node = new TextArea{
-        text.onChange{(_, _, value)=> exo = value}
+        fitWidth  <== pa.width
+        fitHeight <== pa.height
       }
     }
     class Exo{

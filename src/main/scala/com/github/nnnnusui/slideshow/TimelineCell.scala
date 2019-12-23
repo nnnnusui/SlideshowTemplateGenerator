@@ -5,14 +5,13 @@ import java.nio.file.Paths
 import com.github.nnnnusui.slideshow.Timeline.Object.Picture
 import javafx.scene.{input => jfxsi}
 import scalafx.scene.control.ListCell
-import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.input.{ClipboardContent, DragEvent, MouseEvent, TransferMode}
 
 import scala.jdk.CollectionConverters._
 
 class TimelineCell(val tl: Timeline) extends ListCell[Timeline.Object] {
   item.onChange{ (_, _, value)=> text = if (value == null) "" else value.name }
-  selected.onChange { (_, _, value) => if (value) tl.preview.center = item.value.view }
+  selected.onChange { (_, _, value) => if (value) tl.preview.center = item.value.getView(tl.preview) }
   onMouseClicked = event=> if (event.getButton == jfxsi.MouseButton.MIDDLE) remove()
   onDragDetected = event=>{
     LocalSorting.onDetect(new MouseEvent(event))
